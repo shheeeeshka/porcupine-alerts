@@ -10,7 +10,7 @@ config();
 async function main() {
     // const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
-        headless: true, // true - to hide browser / false
+        headless: process.env.SHOW_BROWSER === "1" ? false : true, // true - to hide browser / false
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,

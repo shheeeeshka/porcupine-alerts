@@ -3,6 +3,7 @@ Create .env file in working directory.
 TARGET_URL=https://secure.e-konsulat.gov.pl/placowki/82/karta-polaka/formularz
 OS=macos # macos / windows
 TYPE_NUM=2 # 0 / 1 / 2 / 3 - (3)
+SHOW_BROWSER=1 # 1 / 0 - 1 will display browser's process, 0 - won't
 
 NAME=OLEG
 SURNAME=SMIRNOV
