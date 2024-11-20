@@ -3,18 +3,19 @@ import Tesseract from "tesseract.js";
 
 import { config } from "dotenv";
 import { sleep } from "./utils.js";
+import mailService from "./mailService.js";
 
 config();
 
 async function main() {
-    const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
+    // const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true, // true - to hide browser / false
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
         userDataDir: "./tmp",
-        executablePath,
+        // executablePath,
     });
     const page = await browser.newPage();
 
@@ -52,26 +53,54 @@ async function main() {
         fullPage: false,
     };
 
-    await page.waitForSelector(baseFirstPageSelector);
-    await page.screenshot(screenshotOptions);
+    async function solveCaptcha() {
+        await sleep(1.5);
+        await page.waitForSelector(baseFirstPageSelector);
+        await page.screenshot(screenshotOptions);
 
-    const captcha = await Tesseract.recognize(
-        "./screenshots/default-screenshot.png",
-        "eng",
-        {
-            logger: m => console.log("Captcha : ", m),
-            tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$%&",
+        let attempts = 0;
+        const maxAttempts = 15;
+
+        while (attempts < maxAttempts) {
+            const captcha = await Tesseract.recognize(
+                "./screenshots/default-screenshot.png",
+                "eng",
+                {
+                    tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#%&@+=-",
+                }
+            ).then(({ data: { text } }) => {
+                // console.log({ text });
+                return text;
+            }).catch(err => {
+                console.error(err);
+                return null;
+            });
+
+            await page.locator(".mat-input-element").fill(captcha || "TEST");
+            await page.locator(nextBtnFirstPageSelector).click();
+            await sleep(2);
+
+            const isCaptchaIncorrect = await page.evaluate((selector) => {
+                const element = document.querySelector(selector);
+                return element && element.textContent.includes("Weryfikacja obrazkowa");
+            }, baseFirstPageSelector + ">app-ultimate-captcha>div>div");
+
+            if (!isCaptchaIncorrect) return console.log(`Captcha Solved :)`);
+
+            console.log(`Incorrect captcha :( Trying again...`);
+            attempts++;
+            await page.screenshot(screenshotOptions);
+            await sleep(.5);
         }
-    ).then(({ data: { text } }) => {
-        console.log({ text });
-        return text;
-    }).catch(err => console.error(err));
 
-    console.log({ captcha });
+        console.log(`Failed to solve captcha after ${maxAttempts} attempts. Restarting process...`);
+        await browser.close();
+        await sleep(10);
+        return main();
+    }
 
-    await page.locator(".mat-input-element").fill(captcha || "TEST");
-    await page.locator(nextBtnFirstPageSelector).click();
-    await sleep(4);
+    await solveCaptcha();
+    await sleep(1);
 
     await page.locator(firstAppSelectSelector).click()
         .then(() => page.locator(firstAppOption).click())
@@ -100,16 +129,25 @@ async function main() {
     try {
         await page.waitForFunction(
             (selector) => !!document.querySelector(selector).textContent.includes("Aktualnie wszystkie wizyty zostały zarezerwowane"),
-            { timeout: 3000 },
+            { timeout: 1500 },
             textAccessDeniedSelector
         );
 
-        console.log(`Текст "Aktualnie wszystkie wizyty zostały zarezerwowane" появился на странице.`);
+        console.log(`No vacant time for this type. Restarting proccess...`);
         await sleep(2.5);
         await browser.close();
-        return;
+        await sleep(1.2);
+        return main();
     } catch (err) {
         console.log(`STATUS : OK\n${err.message}`);
+    }
+
+    await page.screenshot({ path: `./screenshots/alert-screenshot.png`, fullPage: true });
+
+    try {
+        await mailService.sendAlertMail(`alert-screenshot.png`);
+    } catch (err) {
+        console.error("An error occurred while sending email\n", err.message);
     }
 
     await page.locator(fourthAppSelectSelector).click()
@@ -129,7 +167,7 @@ async function main() {
     const thirdPageNameInputSelector = thirdPageFormSelector + ">div:nth-child(3)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageDOBInputSelector = thirdPageFormSelector + ">div:nth-child(4)>div>app-date-control>mat-form-field>div>div>div:nth-child(3)>input"; // done
     const thirdPageCitizenshipInputSelector = thirdPageFormSelector + ">div:nth-child(5)>div>app-select-control>mat-form-field>div>div>div:last-child>mat-select"; // done
-    const thirdPageCitizenshipDropdownInputSelector = thirdPageFormSelector + `#mat-option-${"427"}>span`; // done 427 - russia
+    const thirdPageCitizenshipDropdownInputSelector = thirdPageFormSelector + `#mat-select-22-panel>mat-option:nth-child(179)`; // done
     const thirdPageGenderInputSelector = thirdPageFormSelector + `>div:nth-child(6)>div>app-radio-control>div>mat-radio-group>div:nth-child(${process.env.GENDER === "male" ? "1" : "2"})>mat-radio-button>label>span`; // done
     const thirdPagePassportNumberInputSelector = thirdPageFormSelector + ">div:nth-child(7)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageStreetInputSelector = thirdPageFormSelector + ">div:nth-child(9)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
@@ -148,11 +186,12 @@ async function main() {
     const checkBoxSelector = baseThirdPageSelector + ">div:nth-child(2)>app-checkbox-control>mat-checkbox>label>span";
     const nextBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div>button:last-child";
 
+    await sleep(.5);
+
     await page.locator(thirdPageSurnameInputSelector).fill(process.env.SURNAME).catch(err => console.error(err));
+    await sleep(.5);
     await page.locator(thirdPageNameInputSelector).fill(process.env.NAME).catch(err => console.error(err));
     await page.locator(thirdPageDOBInputSelector).fill(process.env.DATE_OF_BIRTH).catch(err => console.error(err));
-    await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err));
-    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err));
     await page.locator(thirdPageGenderInputSelector).click().catch(err => console.error(err));
     await page.locator(thirdPagePassportNumberInputSelector).fill(process.env.PASSPORT_NUMBER).catch(err => console.error(err));
     await page.locator(thirdPageStreetInputSelector).fill(process.env.STREET).catch(err => console.error(err));
@@ -163,6 +202,18 @@ async function main() {
     await page.locator(thirdPagePhoneNumberInputSelector).fill(phoneNumber).catch(err => console.error(err));
     await page.locator(thirdPageEmailInputSelector).fill(process.env.EMAIL).catch(err => console.error(err));
     await page.locator(thirdPageDescriptionInputSelector).fill(process.env.DESCRIPTION).catch(err => console.error(err));
+    await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err));
+    await sleep(1.3);
+    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err));
+    // await page.evaluate((selector) => {
+    //     const element = document.querySelector(selector);
+    //     console.log({ element });
+    //     if (element) {
+    //         element.click();
+    //     }
+    // }, thirdPageCitizenshipDropdownInputSelector);
+
+    await sleep(2.5);
 
     await page.locator(checkBoxSelector).click().catch(err => console.error(err));
     await page.locator(nextBtnThirdPageSelector).click().catch(err => console.error(err));
@@ -181,66 +232,3 @@ main();
 // 1 page - #main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-reservation-appointment-page>div>div>app-poles-card-reservation-appointment-captcha>app-captcha
 // 2 page - #main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-reservation-appointment-page>div>div>app-poles-card-reservation-appointment-data>app-poles-card-reservation-appointment-form>form>div>div
 // #cdk-overlay-3>div>div>mat-option:nth-child(2)
-
-
-
-// import puppeteer from "puppeteer";
-// import Tesseract from "tesseract.js";
-// import fs from "fs"; // Импортируем модуль fs для работы с файловой системой
-// import { config } from "dotenv";
-// import Jimp from "jimp"; // Импортируем Jimp для обработки изображений
-
-// config();
-
-// async function main() {
-//     const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
-//     const browser = await puppeteer.launch({
-//         headless: false,
-//         defaultViewport: false,
-//         timeout: 0,
-//         protocolTimeout: 0,
-//         userDataDir: "./tmp",
-//         executablePath,
-//     });
-//     const page = await browser.newPage();
-
-//     await page.goto(process.env.TARGET_URL, { waitUntil: "networkidle0", timeout: 60000 });
-//     await page.setViewport({ width: 1820, height: 1080 });
-
-//     const baseFirstPageSelector = "#main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-reservation-appointment-page>div>div>app-poles-card-reservation-appointment-captcha>app-captcha";
-//     const captchaImgSelector = baseFirstPageSelector + ">app-ultimate-captcha>div>div:nth-child(2)>img";
-
-//     const captchaSrc = await page.$eval(captchaImgSelector, img => img.src);
-//     const base64Data = captchaSrc.split(',')[1]; // Извлекаем только часть с данными
-//     const buffer = Buffer.from(base64Data, 'base64'); // Декодируем Base64 в буфер
-
-//     // Сохраняем изображение в локальную папку
-//     const imagePath = "./screenshots/captcha.png"; // Путь к файлу
-//     fs.writeFileSync(imagePath, buffer); // Записываем буфер в файл
-
-//     // Опционально: обрабатываем изображение с помощью Jimp (например, для увеличения контрастности)
-//     const image = await Jimp.read(imagePath);
-//     image
-//         .greyscale() // Преобразование в черно-белое
-//         .contrast(1) // Увеличение контрастности
-//         .writeAsync(imagePath); // Сохраняем обработанное изображение
-
-//     // Распознаем текст с сохраненного изображения
-//     const captcha = await Tesseract.recognize(
-//         imagePath, // Путь к локальному файлу
-//         "eng",
-//         { logger: m => console.log("Captcha : ", m) } // Логирование процесса
-//     ).then(({ data: { text } }) => {
-//         console.log({ text });
-//         return text;
-//     }).catch(err => console.error(err));
-
-//     console.log({ captcha });
-
-//     await page.locator(".mat-input-element").fill(captcha || "TEST");
-//     // await page.locator(nextBtnFirstPageSelector).click();
-
-//     // await browser.close(); // unnecessary
-// }
-
-// main();
