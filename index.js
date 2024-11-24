@@ -14,7 +14,7 @@ async function main() {
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
-        userDataDir: "./tmp",
+        // userDataDir: "./tmp",
         // executablePath,
     });
     const page = await browser.newPage();
@@ -40,7 +40,6 @@ async function main() {
     const secondAppOption = `#mat-option-12>span:nth-child(1)`;
     const thirdAppOption = `#mat-option-4>span`;
     const fourthAppOption = `#mat-option-13>span`;
-    const fifthAppOption = `#mat-option-16>span`; // #mat-option-16 > span
 
     const screenshotOptions = {
         path: "./screenshots/default-screenshot.png",
@@ -72,7 +71,7 @@ async function main() {
                 // console.log({ text });
                 return text;
             }).catch(err => {
-                console.error(err);
+                console.error(err.message);
                 return null;
             });
 
@@ -99,20 +98,43 @@ async function main() {
         return main();
     }
 
+    async function selectFifthAppOption() {
+        const options = [
+            `#mat-option-14>span`,
+            `#mat-option-15>span`,
+            `#mat-option-16>span`,
+            `#mat-option-17>span`,
+            `#mat-option-18>span`
+        ];
+
+        await page.locator(fifthAppSelectSelector).click()
+            .catch(err => console.error(err.message));
+
+        for (const option of options) {
+            const element = await page.$(option);
+            if (element) {
+                await page.locator(option).click().catch(err => console.error(err.message));
+                return;
+            }
+        }
+
+        console.log(`No available options found for fifthAppOption.`);
+    }
+
     await solveCaptcha();
     await sleep(1);
 
     await page.locator(firstAppSelectSelector).click()
         .then(() => page.locator(firstAppOption).click())
-        .catch(err => console.error(err));
+        .catch(err => console.error(err.message));
 
     await page.locator(secondAppSelectSelector).click()
         .then(() => page.locator(secondAppOption).click())
-        .catch(err => console.error(err));
+        .catch(err => console.error(err.message));
 
     await page.locator(thirdAppSelectSelector).click()
         .then(() => page.locator(thirdAppOption).click())
-        .catch(err => console.error(err));
+        .catch(err => console.error(err.message));
 
     // const textAccessDenied = await page.waitForSelector(textAccessDeniedSelector, { timeout: 2000 });
 
@@ -129,7 +151,7 @@ async function main() {
     try {
         await page.waitForFunction(
             (selector) => !!document.querySelector(selector).textContent.includes("Aktualnie wszystkie wizyty zostały zarezerwowane"),
-            { timeout: 1500 },
+            { timeout: 1000 },
             textAccessDeniedSelector
         );
 
@@ -152,13 +174,13 @@ async function main() {
 
     await page.locator(fourthAppSelectSelector).click()
         .then(() => page.locator(fourthAppOption).click())
-        .catch(err => console.error(err));
+        .catch(err => console.error(err.message));
 
-    await page.locator(fifthAppSelectSelector).click()
-        .then(() => page.locator(fifthAppOption).click())
-        .catch(err => console.error(err));
+    await sleep(.8);
 
-    await page.locator(nextBtnSecondPageSelector).click();
+    await selectFifthAppOption().catch(err => console.error(err.message));
+
+    await page.locator(nextBtnSecondPageSelector).click().catch(err => console.error(err.message));
     await sleep(2.2);
 
     const baseThirdPageSelector = "#main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-page>div>app-poles-card-form>form";
@@ -168,11 +190,12 @@ async function main() {
     const thirdPageNameInputSelector = thirdPageFormSelector + ">div:nth-child(3)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageDOBInputSelector = thirdPageFormSelector + ">div:nth-child(4)>div>app-date-control>mat-form-field>div>div>div:nth-child(3)>input"; // done
     const thirdPageCitizenshipInputSelector = thirdPageFormSelector + ">div:nth-child(5)>div>app-select-control>mat-form-field>div>div>div:last-child>mat-select"; // done
-    const thirdPageCitizenshipDropdownInputSelector = `#mat-option-415>span`; // done
+    const thirdPageCitizenshipDropdownInputSelector = `#mat-option-414>span`; // done
     const thirdPageGenderInputSelector = thirdPageFormSelector + `>div:nth-child(6)>div>app-radio-control>div>mat-radio-group>div:nth-child(${process.env.GENDER === "male" ? "1" : "2"})>mat-radio-button>label>span`; // done
     const thirdPagePassportNumberInputSelector = thirdPageFormSelector + ">div:nth-child(7)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageStreetInputSelector = thirdPageFormSelector + ">div:nth-child(9)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageHouseNumberInputSelector = thirdPageFormSelector + ">div:nth-child(10)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
+    const thirdPageApartNumberInputSelector = thirdPageFormSelector + ">div:nth-child(11)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPagePostcodeInputSelector = thirdPageFormSelector + ">div:nth-child(12)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageCityInputSelector = thirdPageFormSelector + ">div:nth-child(13)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPagePhoneNumberPrefixInputSelector = thirdPageFormSelector + ">div:nth-child(14)>div:nth-child(1)>app-autocomplete-control>mat-form-field>div>div>div:nth-child(3)>input"; // done
@@ -185,25 +208,27 @@ async function main() {
     const phoneNumber = pN.slice(2);
 
     const checkBoxSelector = baseThirdPageSelector + ">div:nth-child(2)>app-checkbox-control>mat-checkbox>label>span";
-    const nextBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div:last-child>button";
+    const nextBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div>button:nth-child(2)";
+    const nextFinBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div:last-child>button";
 
     await sleep(.5);
 
-    await page.locator(thirdPageSurnameInputSelector).fill(process.env.SURNAME).catch(err => console.error(err));
+    await page.locator(thirdPageSurnameInputSelector).fill(process.env.SURNAME).catch(err => console.error(err.message));
     await sleep(.5);
-    await page.locator(thirdPageNameInputSelector).fill(process.env.NAME).catch(err => console.error(err));
-    await page.locator(thirdPageDOBInputSelector).fill(process.env.DATE_OF_BIRTH).catch(err => console.error(err));
-    await page.locator(thirdPageGenderInputSelector).click().catch(err => console.error(err));
-    await page.locator(thirdPagePassportNumberInputSelector).fill(process.env.PASSPORT_NUMBER).catch(err => console.error(err));
-    await page.locator(thirdPageStreetInputSelector).fill(process.env.STREET).catch(err => console.error(err));
-    await page.locator(thirdPageHouseNumberInputSelector).fill(process.env.HOUSE_NUMBER).catch(err => console.error(err));
-    await page.locator(thirdPagePostcodeInputSelector).fill(process.env.POSTCODE).catch(err => console.error(err));
-    await page.locator(thirdPageCityInputSelector).fill(process.env.CITY).catch(err => console.error(err));
-    await page.locator(thirdPagePhoneNumberPrefixInputSelector).fill(phoneNumberPrefix).catch(err => console.error(err));
-    await page.locator(thirdPagePhoneNumberInputSelector).fill(phoneNumber).catch(err => console.error(err));
-    await page.locator(thirdPageEmailInputSelector).fill(process.env.EMAIL).catch(err => console.error(err));
-    await page.locator(thirdPageDescriptionInputSelector).fill(process.env.DESCRIPTION).catch(err => console.error(err));
-    await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err));
+    await page.locator(thirdPageNameInputSelector).fill(process.env.NAME).catch(err => console.error(err.message));
+    await page.locator(thirdPageDOBInputSelector).fill(process.env.DATE_OF_BIRTH).catch(err => console.error(err.message));
+    await page.locator(thirdPageGenderInputSelector).click().catch(err => console.error(err.message));
+    await page.locator(thirdPagePassportNumberInputSelector).fill(process.env.PASSPORT_NUMBER).catch(err => console.error(err.message));
+    await page.locator(thirdPageStreetInputSelector).fill(process.env.STREET).catch(err => console.error(err.message));
+    await page.locator(thirdPageHouseNumberInputSelector).fill(process.env.HOUSE_NUMBER).catch(err => console.error(err.message));
+    await page.locator(thirdPageApartNumberInputSelector).fill(process.env.APART_NUMBER).catch(err => console.error(err.message));
+    await page.locator(thirdPagePostcodeInputSelector).fill(process.env.POSTCODE).catch(err => console.error(err.message));
+    await page.locator(thirdPageCityInputSelector).fill(process.env.CITY).catch(err => console.error(err.message));
+    await page.locator(thirdPagePhoneNumberPrefixInputSelector).fill(phoneNumberPrefix).catch(err => console.error(err.message));
+    await page.locator(thirdPagePhoneNumberInputSelector).fill(phoneNumber).catch(err => console.error(err.message));
+    await page.locator(thirdPageEmailInputSelector).fill(process.env.EMAIL).catch(err => console.error(err.message));
+    await page.locator(thirdPageDescriptionInputSelector).fill(process.env.DESCRIPTION).catch(err => console.error(err.message));
+    await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err.message));
 
     // await page.evaluate((selector) => {
     //     const element = document.querySelector(selector);
@@ -214,13 +239,15 @@ async function main() {
     // }, thirdPageCitizenshipDropdownInputSelector);
 
     await sleep(1.3);
-    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err));
+    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err.message));
 
     await sleep(2.5);
 
-    await page.locator(checkBoxSelector).click().catch(err => console.error(err));
+    await page.locator(checkBoxSelector).click().catch(err => console.error(err.message));
     await sleep(1.5);
-    await page.locator(nextBtnThirdPageSelector).click().catch(err => console.error(err));
+    await page.locator(nextBtnThirdPageSelector).click().catch(err => console.error(err.message));
+    await sleep(2);
+    await page.locator(nextFinBtnThirdPageSelector).click().catch(err => console.error(err.message));
     await sleep(4.5);
     const formattedDate = getFormattedDate();
     const finalScreenshotName = `final-page-screenshot-${formattedDate}.png`;
