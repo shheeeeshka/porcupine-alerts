@@ -211,6 +211,27 @@ async function main() {
     const nextBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div>button:nth-child(2)";
     const nextFinBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div:last-child>button";
 
+    async function selectCitizenship() {
+        await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err.message));
+
+        for (let i = 410; i <= 420; i++) {
+            const optionSelector = `#mat-option-${i}>span`;
+
+            const isMatch = await page.evaluate((selector) => {
+                const element = document.querySelector(selector);
+                return element ? element.textContent.includes("ROSJA") : false;
+            }, optionSelector);
+
+            if (isMatch) {
+                await page.locator(optionSelector).click().catch(err => console.error(err.message));
+                console.log(`Selected citizenship option: ${optionSelector}`);
+                return;
+            }
+        }
+
+        console.log(`No matching citizenship option found.`);
+    }
+
     await sleep(.5);
 
     await page.locator(thirdPageSurnameInputSelector).fill(process.env.SURNAME).catch(err => console.error(err.message));
@@ -221,6 +242,7 @@ async function main() {
     await page.locator(thirdPagePassportNumberInputSelector).fill(process.env.PASSPORT_NUMBER).catch(err => console.error(err.message));
     await page.locator(thirdPageStreetInputSelector).fill(process.env.STREET).catch(err => console.error(err.message));
     await page.locator(thirdPageHouseNumberInputSelector).fill(process.env.HOUSE_NUMBER).catch(err => console.error(err.message));
+    await sleep(.4);
     await page.locator(thirdPageApartNumberInputSelector).fill(process.env.APART_NUMBER).catch(err => console.error(err.message));
     await page.locator(thirdPagePostcodeInputSelector).fill(process.env.POSTCODE).catch(err => console.error(err.message));
     await page.locator(thirdPageCityInputSelector).fill(process.env.CITY).catch(err => console.error(err.message));
@@ -228,7 +250,7 @@ async function main() {
     await page.locator(thirdPagePhoneNumberInputSelector).fill(phoneNumber).catch(err => console.error(err.message));
     await page.locator(thirdPageEmailInputSelector).fill(process.env.EMAIL).catch(err => console.error(err.message));
     await page.locator(thirdPageDescriptionInputSelector).fill(process.env.DESCRIPTION).catch(err => console.error(err.message));
-    await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err.message));
+    // await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err.message));
 
     // await page.evaluate((selector) => {
     //     const element = document.querySelector(selector);
@@ -239,7 +261,8 @@ async function main() {
     // }, thirdPageCitizenshipDropdownInputSelector);
 
     await sleep(1.3);
-    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err.message));
+    await selectCitizenship();
+    // await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err.message));
 
     await sleep(2.5);
 
