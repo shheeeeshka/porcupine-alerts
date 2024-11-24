@@ -136,18 +136,6 @@ async function main() {
         .then(() => page.locator(thirdAppOption).click())
         .catch(err => console.error(err.message));
 
-    // const textAccessDenied = await page.waitForSelector(textAccessDeniedSelector, { timeout: 2000 });
-
-    // console.log({ textAccessDenied });
-
-    // if (!textAccessDenied) {
-    //     console.log(`Busy at the moment`);
-    //     await browser.close();
-    //     return;
-    // }
-
-    // const textAccessDeniedSelector = "text/Aktualnie wszystkie wizyty zostały zarezerwowane";
-
     try {
         await page.waitForFunction(
             (selector) => !!document.querySelector(selector).textContent.includes("Aktualnie wszystkie wizyty zostały zarezerwowane"),
@@ -186,22 +174,22 @@ async function main() {
     const baseThirdPageSelector = "#main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-page>div>app-poles-card-form>form";
     const thirdPageFormSelector = baseThirdPageSelector + ">app-poles-card-personal-data>fieldset";
 
-    const thirdPageSurnameInputSelector = thirdPageFormSelector + ">div:nth-child(2)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageNameInputSelector = thirdPageFormSelector + ">div:nth-child(3)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageDOBInputSelector = thirdPageFormSelector + ">div:nth-child(4)>div>app-date-control>mat-form-field>div>div>div:nth-child(3)>input"; // done
-    const thirdPageCitizenshipInputSelector = thirdPageFormSelector + ">div:nth-child(5)>div>app-select-control>mat-form-field>div>div>div:last-child>mat-select"; // done
-    const thirdPageCitizenshipDropdownInputSelector = `#mat-option-414>span`; // done
-    const thirdPageGenderInputSelector = thirdPageFormSelector + `>div:nth-child(6)>div>app-radio-control>div>mat-radio-group>div:nth-child(${process.env.GENDER === "male" ? "1" : "2"})>mat-radio-button>label>span`; // done
-    const thirdPagePassportNumberInputSelector = thirdPageFormSelector + ">div:nth-child(7)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageStreetInputSelector = thirdPageFormSelector + ">div:nth-child(9)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageHouseNumberInputSelector = thirdPageFormSelector + ">div:nth-child(10)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageApartNumberInputSelector = thirdPageFormSelector + ">div:nth-child(11)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPagePostcodeInputSelector = thirdPageFormSelector + ">div:nth-child(12)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageCityInputSelector = thirdPageFormSelector + ">div:nth-child(13)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPagePhoneNumberPrefixInputSelector = thirdPageFormSelector + ">div:nth-child(14)>div:nth-child(1)>app-autocomplete-control>mat-form-field>div>div>div:nth-child(3)>input"; // done
-    const thirdPagePhoneNumberInputSelector = thirdPageFormSelector + ">div:nth-child(14)>div:nth-child(2)>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageEmailInputSelector = thirdPageFormSelector + ">div:nth-child(17)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
-    const thirdPageDescriptionInputSelector = thirdPageFormSelector + ">div:nth-child(18)>div>app-textarea-control>mat-form-field>div>div>div:last-child>textarea"; // done
+    const thirdPageSurnameInputSelector = thirdPageFormSelector + ">div:nth-child(2)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageNameInputSelector = thirdPageFormSelector + ">div:nth-child(3)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageDOBInputSelector = thirdPageFormSelector + ">div:nth-child(4)>div>app-date-control>mat-form-field>div>div>div:nth-child(3)>input";
+    const thirdPageCitizenshipInputSelector = thirdPageFormSelector + ">div:nth-child(5)>div>app-select-control>mat-form-field>div>div>div:last-child>mat-select";
+    const thirdPageCitizenshipDropdownInputSelector = `#mat-option-414>span`;
+    const thirdPageGenderInputSelector = thirdPageFormSelector + `>div:nth-child(6)>div>app-radio-control>div>mat-radio-group>div:nth-child(${process.env.GENDER === "male" ? "1" : "2"})>mat-radio-button>label>span`;
+    const thirdPagePassportNumberInputSelector = thirdPageFormSelector + ">div:nth-child(7)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageStreetInputSelector = thirdPageFormSelector + ">div:nth-child(9)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageHouseNumberInputSelector = thirdPageFormSelector + ">div:nth-child(10)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageApartNumberInputSelector = thirdPageFormSelector + ">div:nth-child(11)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPagePostcodeInputSelector = thirdPageFormSelector + ">div:nth-child(12)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageCityInputSelector = thirdPageFormSelector + ">div:nth-child(13)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPagePhoneNumberPrefixInputSelector = thirdPageFormSelector + ">div:nth-child(14)>div:nth-child(1)>app-autocomplete-control>mat-form-field>div>div>div:nth-child(3)>input";
+    const thirdPagePhoneNumberInputSelector = thirdPageFormSelector + ">div:nth-child(14)>div:nth-child(2)>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageEmailInputSelector = thirdPageFormSelector + ">div:nth-child(17)>div>app-text-control>mat-form-field>div>div>div:last-child>input";
+    const thirdPageDescriptionInputSelector = thirdPageFormSelector + ">div:nth-child(18)>div>app-textarea-control>mat-form-field>div>div>div:last-child>textarea";
 
     const pN = process.env.PHONE_NUMBER || "";
     const phoneNumberPrefix = pN.slice(0, 2);
@@ -250,19 +238,8 @@ async function main() {
     await page.locator(thirdPagePhoneNumberInputSelector).fill(phoneNumber).catch(err => console.error(err.message));
     await page.locator(thirdPageEmailInputSelector).fill(process.env.EMAIL).catch(err => console.error(err.message));
     await page.locator(thirdPageDescriptionInputSelector).fill(process.env.DESCRIPTION).catch(err => console.error(err.message));
-    // await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err.message));
-
-    // await page.evaluate((selector) => {
-    //     const element = document.querySelector(selector);
-    //     console.log({ element });
-    //     if (element) {
-    //         element.click();
-    //     }
-    // }, thirdPageCitizenshipDropdownInputSelector);
-
-    await sleep(1.3);
+    await sleep(.8);
     await selectCitizenship();
-    // await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err.message));
 
     await sleep(2.5);
 
@@ -288,11 +265,9 @@ async function main() {
 
 main();
 
-// tesseract for captcha
 // .mat-input-element.mat-form-field-autofill-control.ng-tns-c81-1.ng-untouched.ng-pristine.ng-invalid.cdk-text-field-autofill-monitored
 // .mat-focus-indicator.mat-button.mat-button-base
 // #main-content > app-dashboard > app-institutions > app-institutions > app-poles-card > div > app-poles-card-reservation-appointment-page > div > div > app-poles-card-reservation-appointment-captcha > app-captcha > div > div.d-flex>app-button-control>button
-
 
 // 1 page - #main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-reservation-appointment-page>div>div>app-poles-card-reservation-appointment-captcha>app-captcha
 // 2 page - #main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-reservation-appointment-page>div>div>app-poles-card-reservation-appointment-data>app-poles-card-reservation-appointment-form>form>div>div
