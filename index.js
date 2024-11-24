@@ -2,20 +2,20 @@ import puppeteer from "puppeteer";
 import Tesseract from "tesseract.js";
 
 import { config } from "dotenv";
-import { sleep } from "./utils.js";
+import { getFormattedDate, sleep } from "./utils.js";
 import mailService from "./mailService.js";
 
 config();
 
 async function main() {
-    // const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
+    const executablePath = process.env.OS === "macos" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "";
     const browser = await puppeteer.launch({
         headless: process.env.SHOW_BROWSER === "1" ? false : true, // true - to hide browser / false
         defaultViewport: false,
         timeout: 0,
         protocolTimeout: 0,
         userDataDir: "./tmp",
-        // executablePath,
+        executablePath,
     });
     const page = await browser.newPage();
 
@@ -40,7 +40,7 @@ async function main() {
     const secondAppOption = `#mat-option-12>span:nth-child(1)`;
     const thirdAppOption = `#mat-option-4>span`;
     const fourthAppOption = `#mat-option-13>span`;
-    const fifthAppOption = `#mat-option-14>span`;
+    const fifthAppOption = `#mat-option-16>span`; // #mat-option-16 > span
 
     const screenshotOptions = {
         path: "./screenshots/default-screenshot.png",
@@ -159,6 +159,7 @@ async function main() {
         .catch(err => console.error(err));
 
     await page.locator(nextBtnSecondPageSelector).click();
+    await sleep(2.2);
 
     const baseThirdPageSelector = "#main-content>app-dashboard>app-institutions>app-institutions>app-poles-card>div>app-poles-card-page>div>app-poles-card-form>form";
     const thirdPageFormSelector = baseThirdPageSelector + ">app-poles-card-personal-data>fieldset";
@@ -167,7 +168,7 @@ async function main() {
     const thirdPageNameInputSelector = thirdPageFormSelector + ">div:nth-child(3)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageDOBInputSelector = thirdPageFormSelector + ">div:nth-child(4)>div>app-date-control>mat-form-field>div>div>div:nth-child(3)>input"; // done
     const thirdPageCitizenshipInputSelector = thirdPageFormSelector + ">div:nth-child(5)>div>app-select-control>mat-form-field>div>div>div:last-child>mat-select"; // done
-    const thirdPageCitizenshipDropdownInputSelector = thirdPageFormSelector + `#mat-select-22-panel>mat-option:nth-child(179)`; // done
+    const thirdPageCitizenshipDropdownInputSelector = `#mat-option-415>span`; // done
     const thirdPageGenderInputSelector = thirdPageFormSelector + `>div:nth-child(6)>div>app-radio-control>div>mat-radio-group>div:nth-child(${process.env.GENDER === "male" ? "1" : "2"})>mat-radio-button>label>span`; // done
     const thirdPagePassportNumberInputSelector = thirdPageFormSelector + ">div:nth-child(7)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
     const thirdPageStreetInputSelector = thirdPageFormSelector + ">div:nth-child(9)>div>app-text-control>mat-form-field>div>div>div:last-child>input"; // done
@@ -184,7 +185,7 @@ async function main() {
     const phoneNumber = pN.slice(2);
 
     const checkBoxSelector = baseThirdPageSelector + ">div:nth-child(2)>app-checkbox-control>mat-checkbox>label>span";
-    const nextBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div>button:last-child";
+    const nextBtnThirdPageSelector = baseThirdPageSelector + ">div:nth-child(4)>div:last-child>button";
 
     await sleep(.5);
 
@@ -203,8 +204,7 @@ async function main() {
     await page.locator(thirdPageEmailInputSelector).fill(process.env.EMAIL).catch(err => console.error(err));
     await page.locator(thirdPageDescriptionInputSelector).fill(process.env.DESCRIPTION).catch(err => console.error(err));
     await page.locator(thirdPageCitizenshipInputSelector).click().catch(err => console.error(err));
-    await sleep(1.3);
-    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err));
+
     // await page.evaluate((selector) => {
     //     const element = document.querySelector(selector);
     //     console.log({ element });
@@ -213,12 +213,27 @@ async function main() {
     //     }
     // }, thirdPageCitizenshipDropdownInputSelector);
 
+    await sleep(1.3);
+    await page.locator(thirdPageCitizenshipDropdownInputSelector).click().catch(err => console.error(err));
+
     await sleep(2.5);
 
     await page.locator(checkBoxSelector).click().catch(err => console.error(err));
+    await sleep(1.5);
     await page.locator(nextBtnThirdPageSelector).click().catch(err => console.error(err));
+    await sleep(4.5);
+    const formattedDate = getFormattedDate();
+    const finalScreenshotName = `final-page-screenshot-${formattedDate}.png`;
+    await page.screenshot({ path: `./screenshots/${finalScreenshotName}` });
 
-    // await browser.close();
+    try {
+        await mailService.sendAlertMail(finalScreenshotName, "Запись в посольство | Статус : Успешно", "Запись в посольство польши успешно создана, скриншот прикреплен к письму!");
+    } catch (err) {
+        console.error("An error occurred while sending email\n", err.message);
+    }
+
+    await sleep(180);
+    await browser.close();
 }
 
 main();

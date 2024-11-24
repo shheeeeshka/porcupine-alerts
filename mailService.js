@@ -19,7 +19,7 @@ class MailService {
         });
     }
 
-    async sendAlertMail(imageName = "") {
+    async sendAlertMail(imageName = "", subject = "Появилось свободное время!!", content = "Появилось свободное время для записи!") {
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
         const imagePath = path.join(__dirname, "screenshots", imageName);
@@ -29,11 +29,11 @@ class MailService {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to: process.env.SMTP_RECIPIENT,
-            subject: `Добавлена новая задача!!`,
+            subject,
             text: "",
             html: `<div style="text-align: center; display: flex; flex-direction: column; gap: 50px;">
-            <p>Появилось свободное время!!</p>
-            <button style="padding: 10px 20px; font-size: 16px;">
+            <p>${content}</p>
+            <button style="padding: 10px 20px; font-size: 16px; border: 1px solid">
                 <a href="${process.env.TARGET_URL}" style="text-decoration: none; color: white;">Перейти на сайт</a>
             </button>
         </div>`,
